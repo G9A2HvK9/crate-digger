@@ -14,18 +14,33 @@
 
 ## Phase 1: Project Skeleton & Hygiene (Days 1-2)
 * [x] **Init:** Initialize Vite project (`npm create vite@latest`) with React/TS.
-* [x] **Firebase Setup:** Run `firebase init` to configure Hosting, Firestore, and Functions. Enable Auth (Google + Email) in the Firebase Console.
+* [x] **Firebase Setup:** Run `firebase init` to configure Hosting, Firestore, and Functions. Enable Auth (Email/Password) in the Firebase Console.
+* [x] **Authentication System:**
+    * Sign up: Email/password with first name, last name, and unique handle (username).
+    * Login: Support email or handle + password authentication.
+    * Password reset: Email or handle lookup for password recovery.
+    * Password change: In-app password change with re-authentication requirement.
+    * Session persistence: Automatic session management via Firebase Auth.
+* [x] **User Profile Management:**
+    * User document stores: `uid`, `email`, `firstName`, `lastName`, `handle`, `lastLibrarySync`, `createdAt`, `updatedAt`.
+    * Handle uniqueness validation and Firestore index for efficient lookups.
+* [x] **API Key Management:**
+    * User-specific API key storage in `userApiKeys` collection.
+    * Support for YouTube Data API v3 and Discogs API keys.
+    * Secure storage with user access control.
+    * Cloud Functions use user keys with fallback to Firebase config.
 * [x] **Styling Config:**
     * Configure Tailwind for Dark Mode (forced, no light mode toggle).
     * Install Shadcn UI components.
     * Create a global layout wrapper that enforces the dark grey/black aesthetic.
     * Set up theme tokens for the Rekordbox palette.
 * [x] **Firestore Schema:** Define data models (TS Interfaces):
-    * `User`: `{ uid, email, lastLibrarySync, createdAt }`
+    * `User`: `{ uid, email, firstName, lastName, handle, lastLibrarySync, createdAt, updatedAt }`
+    * `UserApiKeys`: `{ userId, youtubeApiKey, discogsApiKey, discogsApiSecret, updatedAt }`
     * `Track`: `{ userId, artist, title, remix, format, searchableString, createdAt }` (Index `userId` and `searchableString`).
     * `Playlist`: `{ userId, youtubeUrl, status, createdAt, processedAt }`
     * `ProcessedTrack`: `{ userId, playlistId, youtubeVideoId, youtubeTitle, detectedArtist, detectedTitle, detectedRemix, confidenceScore, ownedStatus, ownedTrackId (ref), marketplaceResults, manualCorrections, status, createdAt, updatedAt }`
-* [x] **Security Rules (Early):** Write basic `firestore.rules` to ensure users can only access their own data. Refine in Phase 6.
+* [x] **Security Rules (Early):** Write basic `firestore.rules` to ensure users can only access their own data. Includes `users`, `userApiKeys`, `tracks`, `playlists`, `processedTracks` collections. Refine in Phase 6.
 * [x] **TypeScript Types:** Create shared type definitions for all Firestore models.
 
 ## Phase 2: The Rekordbox Ingest (Days 3-4)

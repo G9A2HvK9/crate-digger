@@ -30,7 +30,7 @@ CrateDigger solves a common problem for DJs: you find great tracks on YouTube pl
   - Colors: Background `#000000`, Surface `#1e1e1e`, Accent `#00AABB`
 - **Backend**: Firebase Cloud Functions (Node.js) for serverless processing
 - **Database**: Cloud Firestore (NoSQL)
-- **Authentication**: Firebase Authentication (Google + Email/Password)
+- **Authentication**: Firebase Authentication (Email/Password) with handle-based login
 - **Hosting**: Firebase Hosting
 
 ## 🚧 Development Status
@@ -42,6 +42,9 @@ CrateDigger solves a common problem for DJs: you find great tracks on YouTube pl
 - [x] TypeScript type definitions for Firestore models
 - [x] Global Layout component with dark theme enforcement
 - [x] Firestore security rules with user data access control
+- [x] Complete authentication system (sign up, login, password reset/change)
+- [x] User profiles with first name, last name, and unique handle
+- [x] API key management (YouTube, Discogs) stored per-user in Firestore
 
 ### ✅ Phase 2: Rekordbox Ingest (Complete)
 - [x] XML parser for Rekordbox library files (fast-xml-parser)
@@ -134,6 +137,9 @@ CrateDigger/
 │   ├── index.css            # Global styles with Tailwind directives
 │   ├── components/
 │   │   ├── Layout.tsx             # Global layout wrapper with dark theme enforcement
+│   │   ├── Auth.tsx               # Authentication (sign up, login, password reset)
+│   │   ├── Header.tsx             # App header with user menu
+│   │   ├── Settings.tsx           # User settings (password change, API keys)
 │   │   ├── LibraryUpload.tsx      # Rekordbox XML upload component
 │   │   ├── PlaylistProcessor.tsx  # YouTube playlist processing component
 │   │   ├── MarketplaceResults.tsx # Marketplace search results component
@@ -168,21 +174,25 @@ CrateDigger/
 1. Go to [Firebase Console](https://console.firebase.google.com)
 2. Create a new project or select an existing one
 3. Enable the following services:
-   - **Authentication**: Enable Google and Email/Password providers
+   - **Authentication**: Enable Email/Password provider
    - **Firestore Database**: Create database in production mode
    - **Cloud Functions**: Requires Blaze plan for outbound network requests (YouTube API, marketplace APIs)
 4. Copy your Firebase configuration and update `src/firebase-config.ts`
+5. **Optional**: Add your API keys in Settings after creating an account:
+   - YouTube Data API v3 key (for playlist processing)
+   - Discogs API key and secret (for marketplace search)
 
 ### Firestore Security Rules
 
 The security rules in `firestore.rules` enforce user-specific access control:
-- Users can only read/write their own `User`, `Track`, `Playlist`, and `ProcessedTrack` documents
+- Users can only read/write their own `User`, `UserApiKeys`, `Track`, `Playlist`, and `ProcessedTrack` documents
 - All write operations validate that `userId` matches the authenticated user
-- Rules are configured for the collections: `users`, `tracks`, `playlists`, `processedTracks`
+- Rules are configured for the collections: `users`, `userApiKeys`, `tracks`, `playlists`, `processedTracks`
 
 ### Firestore Indexes
 
 Add any required composite indexes to `firestore.indexes.json` as needed. The app requires indexes on:
+- `handle` field in `users` collection for efficient handle lookups
 - `userId` and `searchableString` for efficient track lookups
 
 ## 📝 Available Scripts
