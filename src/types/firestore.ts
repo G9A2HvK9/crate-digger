@@ -38,6 +38,7 @@ export interface MarketplaceResult {
 }
 
 export interface ProcessedTrack {
+  id?: string; // Document ID from Firestore
   userId: string;
   playlistId: string;
   youtubeVideoId: string;

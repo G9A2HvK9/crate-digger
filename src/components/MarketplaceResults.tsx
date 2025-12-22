@@ -19,7 +19,8 @@ export function MarketplaceResults({
   remix,
   processedTrackId,
   existingResults = [],
-}: MarketplaceResultsProps) {
+  compact = false,
+}: MarketplaceResultsProps & { compact?: boolean }) {
   const [user] = useAuthState(auth);
   const [results, setResults] = useState<MarketplaceResult[]>(existingResults);
   const [isSearching, setIsSearching] = useState(false);
@@ -73,6 +74,24 @@ export function MarketplaceResults({
     bandcamp: 'Bandcamp',
     juno: 'Juno Download',
   };
+
+  if (compact && hasResults) {
+    return (
+      <div className="flex gap-1 flex-wrap">
+        {results.map((result, index) => (
+          <a
+            key={index}
+            href={result.url || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-2 py-0.5 text-xs bg-accent hover:bg-accentHover text-background rounded transition-colors"
+          >
+            {storeNames[result.store] || result.store}
+          </a>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface border border-surfaceLight rounded-lg p-4">
