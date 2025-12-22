@@ -94,25 +94,25 @@
     * Log errors for debugging.
 
 ## Phase 5: The Dashboard & Polish (Days 11-14)
-* [ ] **Data Grid:** Build the main dashboard using `@tanstack/react-table`.
+* [x] **Data Grid:** Build the main dashboard using `@tanstack/react-table`.
     * *Style:* High density, monospace fonts for data, sticky headers.
     * *Columns:* YouTube Title, Detected Artist, Detected Title, Confidence Score, Owned Status, Buy Links (grouped by store).
     * *Features:* Sorting, column resizing, row selection.
-* [ ] **Filtering & Search:**
+* [x] **Filtering & Search:**
     * Filter by: "Not in Library", "Low Confidence" (< 70%), "Owned", "Unmatched".
     * Search by artist/title.
-* [ ] **Real-time Updates:** Use Firestore `onSnapshot` listeners to update the UI instantly as tracks are processed in the background.
+* [x] **Real-time Updates:** Use Firestore `onSnapshot` listeners to update the UI instantly as tracks are processed in the background.
     * Show processing status indicators (pending, processing, completed, error).
-* [ ] **Manual Correction (Persistent):**
+* [x] **Manual Correction (Persistent):**
     * UI for inline editing of `detectedArtist`/`detectedTitle` (Story F3).
     * *Critical:* Update Firestore `ProcessedTrack` document, not just local state.
     * Store corrections in `ProcessedTrack.manualCorrections` array for audit trail.
     * Trigger re-run of `searchMarketplace` function with corrected data.
     * Re-run fuzzy matching against library with corrected values.
-* [ ] **Buy Links:** Render clickable links to external stores (open in new tab).
+* [x] **Buy Links:** Render clickable links to external stores (open in new tab).
     * Use accent colors (Cyan/Electric Blue) for visual hierarchy.
-* [ ] **Loading States:** Show skeletons/placeholders while data loads.
-* [ ] **Error States:** Display user-friendly error messages with retry options.
+* [x] **Loading States:** Show skeletons/placeholders while data loads.
+* [x] **Error States:** Display user-friendly error messages with retry options.
 
 ## Phase 6: Refinement & Production Readiness
 * [ ] **Security Rules (Final):** Refine `firestore.rules` with comprehensive access control:

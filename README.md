@@ -65,11 +65,14 @@ CrateDigger solves a common problem for DJs: you find great tracks on YouTube pl
 - [x] MarketplaceResults frontend component with "Scan Markets" button
 - [x] Error handling with retry logic and exponential backoff
 
-### 🔄 Next: Phase 5 - Dashboard & Polish
-- Data grid with @tanstack/react-table
-- Filtering and search functionality
-- Real-time updates with Firestore listeners
-- Manual correction UI with persistent updates
+### ✅ Phase 5: Dashboard & Polish (Complete)
+- [x] Data grid with @tanstack/react-table (high-density, monospace fonts)
+- [x] Filtering (All, Not in Library, Low Confidence, Owned, Unmatched)
+- [x] Search functionality by artist/title/YouTube title
+- [x] Real-time updates with Firestore onSnapshot listeners
+- [x] Manual correction UI with inline editing and persistent Firestore updates
+- [x] Buy links display with accent colors
+- [x] Loading states and error handling
 
 ## 📋 Prerequisites
 
@@ -131,9 +134,10 @@ CrateDigger/
 │   ├── index.css            # Global styles with Tailwind directives
 │   ├── components/
 │   │   ├── Layout.tsx             # Global layout wrapper with dark theme enforcement
-│   │   ├── LibraryUpload.tsx     # Rekordbox XML upload component
-│   │   ├── PlaylistProcessor.tsx # YouTube playlist processing component
-│   │   └── MarketplaceResults.tsx # Marketplace search results component
+│   │   ├── LibraryUpload.tsx      # Rekordbox XML upload component
+│   │   ├── PlaylistProcessor.tsx  # YouTube playlist processing component
+│   │   ├── MarketplaceResults.tsx # Marketplace search results component
+│   │   └── TracksDashboard.tsx    # Main dashboard with data grid
 │   ├── lib/
 │   │   ├── utils.ts         # Utility functions (cn for class merging)
 │   │   ├── rekordboxParser.ts # XML parser for Rekordbox files
