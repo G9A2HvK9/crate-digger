@@ -173,18 +173,22 @@ export const processPlaylist = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Get YouTube API key from environment (set in Firebase Console)
-    const apiKey = functions.config().youtube?.api_key;
-    if (!apiKey) {
+    // Get user's API keys from Firestore
+    const db = admin.firestore();
+    const apiKeysDoc = await db.collection('userApiKeys').doc(userId).get();
+    const apiKeys = apiKeysDoc.data();
+    const youtubeApiKey = apiKeys?.youtubeApiKey || functions.config().youtube?.api_key;
+    
+    if (!youtubeApiKey) {
       throw new functions.https.HttpsError(
         'failed-precondition',
-        'YouTube API key not configured'
+        'YouTube API key not configured. Please add your API key in Settings.'
       );
     }
 
     // Fetch playlist items
     const playlistResponse = await youtube.playlistItems.list({
-      key: apiKey,
+      key: youtubeApiKey,
       part: ['snippet'],
       playlistId,
       maxResults: 50, // YouTube API limit per request
@@ -198,8 +202,7 @@ export const processPlaylist = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Create playlist document
-    const db = admin.firestore();
+    // Create playlist document (db already initialized above)
     const playlistRef = db.collection('playlists').doc();
     await playlistRef.set({
       userId,
@@ -565,9 +568,11 @@ export const searchMarketplace = functions.https.onCall(async (data, context) =>
     const db = admin.firestore();
     const searchQuery = remix ? `${artist} ${title} ${remix}` : `${artist} ${title}`;
     
-    // Get API keys from Firebase config
-    const discogsKey = functions.config().discogs?.api_key;
-    const discogsSecret = functions.config().discogs?.api_secret;
+    // Get user's API keys from Firestore
+    const apiKeysDoc = await db.collection('userApiKeys').doc(userId).get();
+    const apiKeys = apiKeysDoc.data();
+    const discogsKey = apiKeys?.discogsApiKey || functions.config().discogs?.api_key;
+    const discogsSecret = apiKeys?.discogsApiSecret || functions.config().discogs?.api_secret;
 
     // Search all marketplaces in parallel
     const [discogsResult, beatportResult, bandcampResult, junoResult] = await Promise.allSettled([

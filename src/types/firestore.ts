@@ -7,8 +7,20 @@ import { Timestamp } from 'firebase/firestore';
 export interface User {
   uid: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  handle: string; // Unique username
   lastLibrarySync: Timestamp | null;
   createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface UserApiKeys {
+  userId: string;
+  youtubeApiKey: string | null;
+  discogsApiKey: string | null;
+  discogsApiSecret: string | null;
+  updatedAt: Timestamp;
 }
 
 export interface Track {

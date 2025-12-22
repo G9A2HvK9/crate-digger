@@ -33,6 +33,11 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
+
+    // UserApiKeys collection - users can only access their own API keys
+    match /userApiKeys/{userId} {
+      allow read, write: if isOwner(userId);
+    }
   }
 }
 
