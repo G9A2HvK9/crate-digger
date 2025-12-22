@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { google } from 'googleapis';
 import Fuse from 'fuse.js';
+import axios from 'axios';
 
 admin.initializeApp();
 
@@ -287,6 +288,357 @@ export const processPlaylist = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError(
       'internal',
       error.message || 'Failed to process playlist'
+    );
+  }
+});
+
+/**
+ * Retry helper with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError || new Error('Max retries exceeded');
+}
+
+/**
+ * Search Discogs API for physical releases
+ */
+async function searchDiscogs(
+  artist: string,
+  title: string,
+  apiKey?: string,
+  apiSecret?: string
+): Promise<{
+  url: string | null;
+  price: string | null;
+  condition: string | null;
+} | null> {
+  try {
+    const searchQuery = `${artist} ${title}`.trim();
+    const baseUrl = 'https://api.discogs.com';
+    
+    // Search for releases
+    const searchResponse = await retryWithBackoff(async () => {
+      const response = await axios.get(`${baseUrl}/database/search`, {
+        params: {
+          q: searchQuery,
+          type: 'release',
+          per_page: 5,
+        },
+        headers: {
+          'User-Agent': 'CrateDigger/1.0',
+          ...(apiKey && apiSecret ? {
+            'Authorization': `Discogs key=${apiKey}, secret=${apiSecret}`
+          } : {}),
+        },
+      });
+      return response;
+    });
+
+    const results = searchResponse.data.results;
+    if (!results || results.length === 0) {
+      return null;
+    }
+
+    // Get the first result's release details
+    const releaseId = results[0].id;
+    const releaseUrl = `https://www.discogs.com/release/${releaseId}`;
+
+    // Try to get marketplace listings
+    try {
+      const marketplaceResponse = await retryWithBackoff(async () => {
+        const response = await axios.get(`${baseUrl}/marketplace/listings/${releaseId}`, {
+          headers: {
+            'User-Agent': 'CrateDigger/1.0',
+            ...(apiKey && apiSecret ? {
+              'Authorization': `Discogs key=${apiKey}, secret=${apiSecret}`
+            } : {}),
+          },
+        });
+        return response;
+      });
+
+      const listings = marketplaceResponse.data.listings || [];
+      
+      // Find cheapest VG or Mint condition
+      const preferredConditions = ['Mint (M)', 'Near Mint (NM or M-)', 'Very Good Plus (VG+)', 'Very Good (VG)'];
+      let bestListing: any = null;
+      let bestPrice: number = Infinity;
+
+      for (const condition of preferredConditions) {
+        const listing = listings.find((l: any) => 
+          l.condition === condition && l.price && parseFloat(l.price.value) > 0
+        );
+        if (listing && parseFloat(listing.price.value) < bestPrice) {
+          bestListing = listing;
+          bestPrice = parseFloat(listing.price.value);
+        }
+      }
+
+      // Fallback to any available listing
+      if (!bestListing && listings.length > 0) {
+        const availableListings = listings.filter((l: any) => l.price && parseFloat(l.price.value) > 0);
+        if (availableListings.length > 0) {
+          bestListing = availableListings.sort((a: any, b: any) => 
+            parseFloat(a.price.value) - parseFloat(b.price.value)
+          )[0];
+        }
+      }
+
+      if (bestListing) {
+        return {
+          url: releaseUrl,
+          price: `${bestListing.price.value} ${bestListing.price.currency}`,
+          condition: bestListing.condition,
+        };
+      }
+
+      return {
+        url: releaseUrl,
+        price: null,
+        condition: null,
+      };
+    } catch (error) {
+      // If marketplace API fails, return release URL without price
+      console.warn('Discogs marketplace API failed, returning release URL only:', error);
+      return {
+        url: releaseUrl,
+        price: null,
+        condition: null,
+      };
+    }
+  } catch (error) {
+    console.error('Discogs search failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Search Beatport (placeholder - would require scraping)
+ */
+async function searchBeatport(
+  artist: string,
+  title: string
+): Promise<{
+  url: string | null;
+  price: string | null;
+  format: string | null;
+  available: boolean;
+} | null> {
+  try {
+    // Beatport doesn't have a public API, so we'd need to scrape
+    // For now, return a search URL
+    const searchQuery = encodeURIComponent(`${artist} ${title}`);
+    const searchUrl = `https://www.beatport.com/search?q=${searchQuery}`;
+    
+    // In a real implementation, we would:
+    // 1. Scrape the search results page
+    // 2. Find the matching track
+    // 3. Check for lossless formats (WAV, FLAC)
+    // 4. Extract price
+    
+    return {
+      url: searchUrl,
+      price: null,
+      format: null,
+      available: false, // Would be determined by scraping
+    };
+  } catch (error) {
+    console.error('Beatport search failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Search Bandcamp (placeholder - would require scraping)
+ */
+async function searchBandcamp(
+  artist: string,
+  title: string
+): Promise<{
+  url: string | null;
+  price: string | null;
+  format: string | null;
+  available: boolean;
+} | null> {
+  try {
+    // Bandcamp doesn't have a public API, so we'd need to scrape
+    const searchQuery = encodeURIComponent(`${artist} ${title}`);
+    const searchUrl = `https://bandcamp.com/search?q=${searchQuery}`;
+    
+    // In a real implementation, we would:
+    // 1. Scrape the search results
+    // 2. Find the matching track/album
+    // 3. Check for lossless formats (WAV, FLAC, AIFF)
+    // 4. Extract price
+    
+    return {
+      url: searchUrl,
+      price: null,
+      format: null,
+      available: false, // Would be determined by scraping
+    };
+  } catch (error) {
+    console.error('Bandcamp search failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Search Juno Download (placeholder - would require scraping)
+ */
+async function searchJuno(
+  artist: string,
+  title: string
+): Promise<{
+  url: string | null;
+  price: string | null;
+  format: string | null;
+  available: boolean;
+} | null> {
+  try {
+    // Juno Download doesn't have a public API
+    const searchQuery = encodeURIComponent(`${artist} ${title}`);
+    const searchUrl = `https://www.junodownload.com/search/?q[all][]=${searchQuery}`;
+    
+    // In a real implementation, we would scrape the results
+    
+    return {
+      url: searchUrl,
+      price: null,
+      format: null,
+      available: false,
+    };
+  } catch (error) {
+    console.error('Juno search failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Cloud Function to search marketplaces for a track
+ */
+export const searchMarketplace = functions.https.onCall(async (data, context) => {
+  // Verify authentication
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'User must be authenticated to search marketplaces'
+    );
+  }
+
+  const { artist, title, remix, userId, processedTrackId } = data;
+
+  if (!artist || !title || typeof artist !== 'string' || typeof title !== 'string') {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Artist and title are required'
+    );
+  }
+
+  // Verify userId matches authenticated user
+  if (userId !== context.auth.uid) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'User ID does not match authenticated user'
+    );
+  }
+
+  try {
+    const db = admin.firestore();
+    const searchQuery = remix ? `${artist} ${title} ${remix}` : `${artist} ${title}`;
+    
+    // Get API keys from Firebase config
+    const discogsKey = functions.config().discogs?.api_key;
+    const discogsSecret = functions.config().discogs?.api_secret;
+
+    // Search all marketplaces in parallel
+    const [discogsResult, beatportResult, bandcampResult, junoResult] = await Promise.allSettled([
+      searchDiscogs(artist, title, discogsKey, discogsSecret),
+      searchBeatport(artist, title),
+      searchBandcamp(artist, title),
+      searchJuno(artist, title),
+    ]);
+
+    // Build marketplace results array
+    const marketplaceResults: any[] = [];
+
+    if (discogsResult.status === 'fulfilled' && discogsResult.value) {
+      marketplaceResults.push({
+        store: 'discogs',
+        url: discogsResult.value.url,
+        price: discogsResult.value.price,
+        format: null, // Physical releases don't have digital formats
+        available: discogsResult.value.price !== null,
+      });
+    }
+
+    if (beatportResult.status === 'fulfilled' && beatportResult.value) {
+      marketplaceResults.push({
+        store: 'beatport',
+        url: beatportResult.value.url,
+        price: beatportResult.value.price,
+        format: beatportResult.value.format,
+        available: beatportResult.value.available,
+      });
+    }
+
+    if (bandcampResult.status === 'fulfilled' && bandcampResult.value) {
+      marketplaceResults.push({
+        store: 'bandcamp',
+        url: bandcampResult.value.url,
+        price: bandcampResult.value.price,
+        format: bandcampResult.value.format,
+        available: bandcampResult.value.available,
+      });
+    }
+
+    if (junoResult.status === 'fulfilled' && junoResult.value) {
+      marketplaceResults.push({
+        store: 'juno',
+        url: junoResult.value.url,
+        price: junoResult.value.price,
+        format: junoResult.value.format,
+        available: junoResult.value.available,
+      });
+    }
+
+    // Update ProcessedTrack document if provided
+    if (processedTrackId) {
+      const processedTrackRef = db.collection('processedTracks').doc(processedTrackId);
+      await processedTrackRef.update({
+        marketplaceResults,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    return {
+      success: true,
+      marketplaceResults,
+      searched: searchQuery,
+    };
+  } catch (error: any) {
+    console.error('Error searching marketplace:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      error.message || 'Failed to search marketplace'
     );
   }
 });
