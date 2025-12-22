@@ -5,6 +5,7 @@ import { Layout } from './components/Layout'
 import { Auth } from './components/Auth'
 import { Header } from './components/Header'
 import { LibraryUpload } from './components/LibraryUpload'
+import { LibraryView } from './components/LibraryView'
 import { PlaylistProcessor } from './components/PlaylistProcessor'
 import { TracksDashboard } from './components/TracksDashboard'
 import { Settings } from './components/Settings'
@@ -41,6 +42,7 @@ function App() {
             
             <div className="space-y-6">
               <LibraryUpload />
+              <LibraryView />
               <PlaylistProcessor />
               <TracksDashboard />
               

@@ -46,9 +46,15 @@ export function TracksDashboard() {
         setLoading(false);
         setError(null);
       },
-      (err) => {
+      (err: any) => {
         console.error('Error fetching tracks:', err);
-        setError('Failed to load tracks');
+        
+        // Check if it's a missing index error
+        if (err.code === 'failed-precondition' && err.message?.includes('index')) {
+          setError('Firestore index required. The index is being created automatically. Please wait a few minutes and refresh the page.');
+        } else {
+          setError('Failed to load tracks: ' + (err.message || 'Unknown error'));
+        }
         setLoading(false);
       }
     );
@@ -305,7 +311,12 @@ export function TracksDashboard() {
   return (
     <div className="bg-surface border border-surfaceLight rounded-lg p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-text">Processed Tracks</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-text">Processed Tracks</h2>
+          <p className="text-textMuted text-sm mt-1">
+            Tracks from processed YouTube playlists. Upload your library and process a playlist to see tracks here.
+          </p>
+        </div>
         <div className="text-sm text-textMuted">
           {filteredTracks.length} of {tracks.length} tracks
         </div>

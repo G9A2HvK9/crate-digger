@@ -12,8 +12,10 @@ service cloud.firestore {
     }
 
     // Users collection - users can only read/write their own user document
+    // Allow unauthenticated reads for handle uniqueness checks during signup
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if true; // Allow reads for handle uniqueness checks
+      allow write: if isOwner(userId); // Only allow writes to own document
     }
 
     // Tracks collection - users can only access their own tracks

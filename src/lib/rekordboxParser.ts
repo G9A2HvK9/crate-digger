@@ -7,8 +7,9 @@ import type { Track } from '../types/firestore';
 type PreTrack = Omit<Track, 'createdAt'>;
 
 /**
- * Rekordbox XML structure (simplified)
- * The XML contains a COLLECTION with TRACK elements
+ * Rekordbox XML structure
+ * Tracks are stored as TRACK elements with attributes
+ * Example: <TRACK TrackID="123" Name="Track Name" Artist="Artist Name" ... />
  */
 interface RekordboxTrack {
   Name?: string;
@@ -16,12 +17,21 @@ interface RekordboxTrack {
   Album?: string;
   Location?: string;
   Kind?: string; // Format: MP3, WAV, etc.
-  // Remix info might be in Name or Artist field
+  Mix?: string; // Remix information
+  // All fields can be attributes or text content
 }
 
 interface RekordboxCollection {
   COLLECTION?: {
     TRACK?: RekordboxTrack | RekordboxTrack[];
+  };
+}
+
+interface RekordboxXML {
+  DJ_PLAYLISTS?: {
+    COLLECTION?: {
+      TRACK?: RekordboxTrack | RekordboxTrack[];
+    };
   };
 }
 
@@ -71,16 +81,26 @@ function extractRemix(name: string, artist: string): string | null {
 export function parseRekordboxXML(xmlContent: string, userId: string): PreTrack[] {
   const parser = new XMLParser({
     ignoreAttributes: false,
-    attributeNamePrefix: '@_',
+    attributeNamePrefix: '',
     textNodeName: '#text',
+    parseAttributeValue: true,
+    trimValues: true,
   });
 
   try {
-    const parsed = parser.parse(xmlContent) as RekordboxCollection;
-    const collection = parsed.COLLECTION;
+    const parsed = parser.parse(xmlContent) as RekordboxXML;
+    
+    // Try DJ_PLAYLISTS.COLLECTION.TRACK structure first (standard Rekordbox format)
+    let collection = parsed.DJ_PLAYLISTS?.COLLECTION;
+    
+    // Fallback to direct COLLECTION structure (if XML is simplified)
+    if (!collection) {
+      const fallback = parsed as unknown as RekordboxCollection;
+      collection = fallback.COLLECTION;
+    }
     
     if (!collection || !collection.TRACK) {
-      throw new Error('No tracks found in Rekordbox XML');
+      throw new Error('No tracks found in Rekordbox XML. Make sure you\'re uploading a valid rekordbox.xml file exported from Rekordbox.');
     }
 
     // Handle both single track and array of tracks
@@ -96,10 +116,11 @@ export function parseRekordboxXML(xmlContent: string, userId: string): PreTrack[
         continue;
       }
 
-      const artist = track.Artist || 'Unknown Artist';
-      const title = track.Name || 'Unknown Title';
+      const artist = (track.Artist || 'Unknown Artist').trim();
+      const title = (track.Name || 'Unknown Title').trim();
       const format = extractFormat(track.Kind || track.Location || '');
-      const remix = extractRemix(title, artist);
+      // Check for Mix field first, then try to extract from name/artist
+      const remix = track.Mix ? track.Mix.trim() : extractRemix(title, artist);
 
       // Create searchable string from artist + title + remix
       const searchableParts = [artist, title];

@@ -92,9 +92,32 @@ export function PlaylistProcessor() {
       }
     } catch (error: any) {
       console.error('Error processing playlist:', error);
+      
+      // Check for common error cases
+      let errorMessage = 'An error occurred while processing the playlist';
+      
+      // Check for 404 or function not found (Cloud Functions not deployed)
+      if (
+        error.code === 'functions/not-found' || 
+        error.code === 'functions/unavailable' ||
+        error.code === 'internal' ||
+        (error.message && error.message.includes('404')) ||
+        (error.message && error.message.includes('not found'))
+      ) {
+        errorMessage = 'Cloud Functions are not deployed. Please upgrade to Firebase Blaze plan and deploy Cloud Functions using: firebase deploy --only functions';
+      } else if (error.code === 'functions/failed-precondition') {
+        errorMessage = error.message || 'YouTube API key not configured. Please add your API key in Settings.';
+      } else if (error.code === 'functions/unauthenticated') {
+        errorMessage = 'You must be logged in to process playlists.';
+      } else if (error.code === 'functions/permission-denied') {
+        errorMessage = 'You do not have permission to perform this action.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       setProcessingState({
         status: 'error',
-        message: error.message || 'An error occurred while processing the playlist',
+        message: errorMessage,
         playlistId: null,
         tracksProcessed: 0,
       });
@@ -115,6 +138,13 @@ export function PlaylistProcessor() {
       <p className="text-textMuted mb-6 text-sm">
         Paste a YouTube playlist URL to extract track information and match against your library.
       </p>
+      
+      <div className="mb-4 p-3 bg-background border border-surfaceLight rounded text-sm">
+        <p className="text-textMuted">
+          <strong className="text-text">Note:</strong> This feature requires Cloud Functions to be deployed. 
+          If you see an error, make sure you've upgraded to the Firebase Blaze plan and deployed the functions.
+        </p>
+      </div>
 
       <div className="space-y-4">
         <div>

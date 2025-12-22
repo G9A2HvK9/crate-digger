@@ -20,14 +20,13 @@ import type { Firestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import type { Functions } from 'firebase/functions';
 
-// TODO: Replace with your Firebase project configuration
 const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-auth-domain",
-  projectId: "your-project-id",
-  storageBucket: "your-storage-bucket",
-  messagingSenderId: "your-messaging-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyA_kwSMzDmmo61iGajGzidB1Gf8FhDt6RU",
+  authDomain: "crate-digger-app.firebaseapp.com",
+  projectId: "crate-digger-app",
+  storageBucket: "crate-digger-app.firebasestorage.app",
+  messagingSenderId: "360221209260",
+  appId: "1:360221209260:web:4787c757384839d0e6a509"
 };
 
 // Initialize Firebase
