@@ -57,11 +57,19 @@ CrateDigger solves a common problem for DJs: you find great tracks on YouTube pl
 - [x] Fuzzy matching against user library using fuse.js
 - [x] PlaylistProcessor frontend component
 
-### 🔄 Next: Phase 4 - Market Connectors
-- Discogs API integration for physical releases
-- Digital store integration (Beatport, Bandcamp, Juno)
-- Lossless format verification
-- Marketplace results storage and display
+### ✅ Phase 4: Market Connectors (Complete)
+- [x] Discogs API integration for physical releases with price lookup
+- [x] Digital store integration structure (Beatport, Bandcamp, Juno)
+- [x] Lossless format verification structure
+- [x] Marketplace results storage in ProcessedTrack documents
+- [x] MarketplaceResults frontend component with "Scan Markets" button
+- [x] Error handling with retry logic and exponential backoff
+
+### 🔄 Next: Phase 5 - Dashboard & Polish
+- Data grid with @tanstack/react-table
+- Filtering and search functionality
+- Real-time updates with Firestore listeners
+- Manual correction UI with persistent updates
 
 ## 📋 Prerequisites
 
@@ -122,9 +130,10 @@ CrateDigger/
 │   ├── firebase-config.ts   # Firebase configuration
 │   ├── index.css            # Global styles with Tailwind directives
 │   ├── components/
-│   │   ├── Layout.tsx          # Global layout wrapper with dark theme enforcement
-│   │   ├── LibraryUpload.tsx   # Rekordbox XML upload component
-│   │   └── PlaylistProcessor.tsx # YouTube playlist processing component
+│   │   ├── Layout.tsx             # Global layout wrapper with dark theme enforcement
+│   │   ├── LibraryUpload.tsx     # Rekordbox XML upload component
+│   │   ├── PlaylistProcessor.tsx # YouTube playlist processing component
+│   │   └── MarketplaceResults.tsx # Marketplace search results component
 │   ├── lib/
 │   │   ├── utils.ts         # Utility functions (cn for class merging)
 │   │   ├── rekordboxParser.ts # XML parser for Rekordbox files

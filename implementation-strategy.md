@@ -13,52 +13,52 @@
 * **YouTube:** YouTube Data API v3 (with quota management) + fallback scraping if needed (consider `youtube-dl` alternatives or `@distube/ytdl-core`).
 
 ## Phase 1: Project Skeleton & Hygiene (Days 1-2)
-* [ ] **Init:** Initialize Vite project (`npm create vite@latest`) with React/TS.
-* [ ] **Firebase Setup:** Run `firebase init` to configure Hosting, Firestore, and Functions. Enable Auth (Google + Email) in the Firebase Console.
-* [ ] **Styling Config:**
+* [x] **Init:** Initialize Vite project (`npm create vite@latest`) with React/TS.
+* [x] **Firebase Setup:** Run `firebase init` to configure Hosting, Firestore, and Functions. Enable Auth (Google + Email) in the Firebase Console.
+* [x] **Styling Config:**
     * Configure Tailwind for Dark Mode (forced, no light mode toggle).
     * Install Shadcn UI components.
     * Create a global layout wrapper that enforces the dark grey/black aesthetic.
     * Set up theme tokens for the Rekordbox palette.
-* [ ] **Firestore Schema:** Define data models (TS Interfaces):
+* [x] **Firestore Schema:** Define data models (TS Interfaces):
     * `User`: `{ uid, email, lastLibrarySync, createdAt }`
     * `Track`: `{ userId, artist, title, remix, format, searchableString, createdAt }` (Index `userId` and `searchableString`).
     * `Playlist`: `{ userId, youtubeUrl, status, createdAt, processedAt }`
     * `ProcessedTrack`: `{ userId, playlistId, youtubeVideoId, youtubeTitle, detectedArtist, detectedTitle, detectedRemix, confidenceScore, ownedStatus, ownedTrackId (ref), marketplaceResults, manualCorrections, status, createdAt, updatedAt }`
-* [ ] **Security Rules (Early):** Write basic `firestore.rules` to ensure users can only access their own data. Refine in Phase 6.
-* [ ] **TypeScript Types:** Create shared type definitions for all Firestore models.
+* [x] **Security Rules (Early):** Write basic `firestore.rules` to ensure users can only access their own data. Refine in Phase 6.
+* [x] **TypeScript Types:** Create shared type definitions for all Firestore models.
 
 ## Phase 2: The Rekordbox Ingest (Days 3-4)
-* [ ] **XML Parser:** Implement a client-side XML parser (using `fast-xml-parser` or similar) to read the user's `rekordbox.xml`.
+* [x] **XML Parser:** Implement a client-side XML parser (using `fast-xml-parser` or similar) to read the user's `rekordbox.xml`.
     * Extract: Artist, Title, Remix info, Format (mp3/wav/flac).
     * Handle edge cases (missing fields, malformed XML).
-* [ ] **Batch Upload:** Create a utility to upload tracks to Firestore.
+* [x] **Batch Upload:** Create a utility to upload tracks to Firestore.
     * *Critical:* Use Firestore Batched Writes (max 500 ops per batch) to handle large libraries (10k+ tracks) efficiently.
     * Show progress indicator for large uploads.
     * Handle errors gracefully (retry failed batches).
-* [ ] **Search Index:** When saving a track, create a simplified "searchableString" (lowercase, stripped of punctuation, normalized) to help with simpler lookups later.
-* [ ] **Library Sync:** Update `User.lastLibrarySync` timestamp after successful upload.
-* [ ] **UI:** Create upload component with drag-and-drop or file picker, progress bar, and success/error feedback.
+* [x] **Search Index:** When saving a track, create a simplified "searchableString" (lowercase, stripped of punctuation, normalized) to help with simpler lookups later.
+* [x] **Library Sync:** Update `User.lastLibrarySync` timestamp after successful upload.
+* [x] **UI:** Create upload component with drag-and-drop or file picker, progress bar, and success/error feedback.
 
 ## Phase 3: The YouTube Pipeline (Days 5-7)
-* [ ] **YouTube Data Strategy:**
+* [x] **YouTube Data Strategy:**
     * *Primary:* Use YouTube Data API v3 with API key (requires quota management).
         * Quota cost: ~1 unit per video metadata fetch.
         * Default quota: 10,000 units/day (can request increase).
         * Implement rate limiting and quota tracking.
     * *Fallback:* Consider `@distube/ytdl-core` or similar for scraping if API quota is exhausted (use carefully, respect ToS).
-* [ ] **Cloud Function (Ingest):** Create an `onCall` Cloud Function `processPlaylist(url, userId)`.
+* [x] **Cloud Function (Ingest):** Create an `onCall` Cloud Function `processPlaylist(url, userId)`.
     * Validates YouTube playlist URL format.
     * Fetches playlist metadata and video list.
     * For each video, fetch: Title, Description, top Comments (if available via API).
     * Store initial `ProcessedTrack` documents in Firestore with `status: 'pending'`.
     * Return job ID or use Firestore triggers for async processing.
-* [ ] **NLP Logic (Server-side):** Implement the string cleaning logic inside the Cloud Function.
+* [x] **NLP Logic (Server-side):** Implement the string cleaning logic inside the Cloud Function.
     * Use regex patterns + heuristics to extract Artist/Title/Remix from messy titles.
     * Patterns to handle: "ARTIST - TITLE [Official Video]", "TITLE (Remix)", etc.
     * Fallback: Parse Description and Comments if Title is ambiguous (Story C4).
     * Store cleaned `detectedArtist`, `detectedTitle`, `detectedRemix` in `ProcessedTrack`.
-* [ ] **Fuzzy Matcher (Optimized):**
+* [x] **Fuzzy Matcher (Optimized):**
     * *Performance:* Don't fetch entire library. Instead:
         1. Fetch only `searchableString` fields (lightweight query).
         2. Use `fuse.js` in Node.js to fuzzy-match against the lightweight index.
@@ -68,27 +68,27 @@
     * Update `ProcessedTrack` with match results and `status: 'matched'`.
 
 ## Phase 4: Market Connectors (Days 8-10)
-* [ ] **Cloud Function (MarketSearch):** Create an `onCall` function `searchMarketplace(artist, title, remix)` or batch process via Firestore trigger.
+* [x] **Cloud Function (MarketSearch):** Create an `onCall` function `searchMarketplace(artist, title, remix)` or batch process via Firestore trigger.
     * *Note:* Requires Firebase "Blaze" plan for outbound network requests.
     * *Strategy:* Process in batches to avoid timeout limits. Consider background jobs for large playlists.
-* [ ] **Discogs API Integration:**
+* [x] **Discogs API Integration:**
     * Use Discogs API (requires OAuth or API key).
     * Search by artist + title.
     * Parse results for: Release URL, cheapest "VG" or "Mint" condition price.
     * Fallback to next available condition if preferred not found.
-* [ ] **Digital Store Integration:**
+* [x] **Digital Store Integration:**
     * *Beatport:* May require scraping (no public API). Use carefully, respect rate limits.
     * *Bandcamp:* Scraping required. Search by artist/title, check for lossless formats (WAV/FLAC).
     * *Juno Download:* Scraping or check if API exists.
     * For each store, verify lossless format availability (Story E2).
-* [ ] **Marketplace Results Storage:**
+* [x] **Marketplace Results Storage:**
     * Store results in `ProcessedTrack.marketplaceResults` as array:
         `[{ store: 'beatport', url: '...', price: '...', format: 'WAV', available: true }, ...]`
-* [ ] **Frontend Integration:**
+* [x] **Frontend Integration:**
     * Auto-trigger market search after playlist processing completes (for unmatched tracks).
     * Manual trigger via "Scan Markets" button for selected tracks.
     * Show loading states and progress.
-* [ ] **Error Handling:**
+* [x] **Error Handling:**
     * Handle API failures gracefully (retry logic, exponential backoff).
     * Store partial results if some stores fail.
     * Log errors for debugging.
