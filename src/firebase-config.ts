@@ -17,6 +17,8 @@ import { getAuth } from 'firebase/auth';
 import type { Auth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
+import type { Functions } from 'firebase/functions';
 
 // TODO: Replace with your Firebase project configuration
 const firebaseConfig = {
@@ -34,6 +36,7 @@ const app: FirebaseApp = initializeApp(firebaseConfig);
 // Initialize Firebase services
 export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);
+export const functions: Functions = getFunctions(app);
 
 export default app;
 

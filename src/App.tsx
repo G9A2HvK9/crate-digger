@@ -1,5 +1,6 @@
 import { Layout } from './components/Layout'
 import { LibraryUpload } from './components/LibraryUpload'
+import { PlaylistProcessor } from './components/PlaylistProcessor'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         
         <div className="space-y-6">
           <LibraryUpload />
+          <PlaylistProcessor />
           
           <div className="bg-surface border border-surfaceLight rounded-lg p-6">
             <h2 className="text-xl font-semibold text-text mb-4">Development Status</h2>
@@ -26,6 +28,12 @@ function App() {
                 <h3 className="font-semibold text-text mb-1">Phase 2: Rekordbox Ingest ✓</h3>
                 <p className="text-textMuted text-xs">
                   XML parser, batch upload, library sync, upload UI
+                </p>
+              </div>
+              <div className="p-3 bg-background border border-surfaceLight rounded">
+                <h3 className="font-semibold text-text mb-1">Phase 3: YouTube Pipeline ✓</h3>
+                <p className="text-textMuted text-xs">
+                  YouTube API integration, NLP extraction, fuzzy matching, Cloud Functions
                 </p>
               </div>
             </div>
