@@ -43,10 +43,18 @@ CrateDigger solves a common problem for DJs: you find great tracks on YouTube pl
 - [x] Global Layout component with dark theme enforcement
 - [x] Firestore security rules with user data access control
 
-### 🔄 Next: Phase 2 - Rekordbox Ingest
-- XML parser for Rekordbox library files
-- Batch upload to Firestore
-- Library sync functionality
+### ✅ Phase 2: Rekordbox Ingest (Complete)
+- [x] XML parser for Rekordbox library files (fast-xml-parser)
+- [x] Batch upload to Firestore (500 ops per batch)
+- [x] SearchableString normalization function
+- [x] Library sync timestamp update
+- [x] Upload UI component with drag-and-drop, progress bar, and error handling
+
+### 🔄 Next: Phase 3 - YouTube Pipeline
+- YouTube Data API v3 integration with quota management
+- Cloud Function for playlist processing
+- NLP logic for extracting artist/title from messy YouTube titles
+- Fuzzy matching against user library
 
 ## 📋 Prerequisites
 
@@ -107,9 +115,12 @@ CrateDigger/
 │   ├── firebase-config.ts   # Firebase configuration
 │   ├── index.css            # Global styles with Tailwind directives
 │   ├── components/
-│   │   └── Layout.tsx       # Global layout wrapper with dark theme enforcement
+│   │   ├── Layout.tsx       # Global layout wrapper with dark theme enforcement
+│   │   └── LibraryUpload.tsx # Rekordbox XML upload component
 │   ├── lib/
-│   │   └── utils.ts         # Utility functions (cn for class merging)
+│   │   ├── utils.ts         # Utility functions (cn for class merging)
+│   │   ├── rekordboxParser.ts # XML parser for Rekordbox files
+│   │   └── firestoreUpload.ts # Batch upload utilities
 │   └── types/
 │       └── firestore.ts     # TypeScript type definitions for Firestore models
 ├── functions/               # Firebase Cloud Functions (to be implemented)
