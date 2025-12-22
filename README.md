@@ -25,12 +25,28 @@ CrateDigger solves a common problem for DJs: you find great tracks on YouTube pl
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 19 with TypeScript, Vite
-- **Styling**: Tailwind CSS + Shadcn UI
-  - Dark Mode theme with Rekordbox-inspired palette (Background `#111`, Surface `#222`, Accent `#00AABB`)
+- **Styling**: Tailwind CSS v3 + Shadcn UI
+  - Forced Dark Mode theme with Rekordbox-inspired palette
+  - Colors: Background `#000000`, Surface `#1e1e1e`, Accent `#00AABB`
 - **Backend**: Firebase Cloud Functions (Node.js) for serverless processing
 - **Database**: Cloud Firestore (NoSQL)
 - **Authentication**: Firebase Authentication (Google + Email/Password)
 - **Hosting**: Firebase Hosting
+
+## 🚧 Development Status
+
+### ✅ Phase 1: Project Skeleton & Hygiene (Complete)
+- [x] Tailwind CSS configured with forced dark mode
+- [x] Rekordbox theme palette implemented
+- [x] Shadcn UI dependencies installed
+- [x] TypeScript type definitions for Firestore models
+- [x] Global Layout component with dark theme enforcement
+- [x] Firestore security rules with user data access control
+
+### 🔄 Next: Phase 2 - Rekordbox Ingest
+- XML parser for Rekordbox library files
+- Batch upload to Firestore
+- Library sync functionality
 
 ## 📋 Prerequisites
 
@@ -89,8 +105,14 @@ CrateDigger/
 │   ├── App.tsx              # Main application component
 │   ├── main.tsx             # React entry point
 │   ├── firebase-config.ts   # Firebase configuration
-│   └── ...
-├── functions/               # Firebase Cloud Functions
+│   ├── index.css            # Global styles with Tailwind directives
+│   ├── components/
+│   │   └── Layout.tsx       # Global layout wrapper with dark theme enforcement
+│   ├── lib/
+│   │   └── utils.ts         # Utility functions (cn for class merging)
+│   └── types/
+│       └── firestore.ts     # TypeScript type definitions for Firestore models
+├── functions/               # Firebase Cloud Functions (to be implemented)
 │   └── src/                 # Serverless functions (YouTube processing, marketplace search)
 ├── public/                  # Static assets
 ├── dist/                    # Build output (generated)
@@ -98,6 +120,8 @@ CrateDigger/
 ├── .firebaserc              # Firebase project aliases
 ├── firestore.rules          # Firestore security rules
 ├── firestore.indexes.json   # Firestore indexes
+├── tailwind.config.js       # Tailwind CSS configuration
+├── postcss.config.js        # PostCSS configuration
 ├── product-requirements.md  # Product requirements document
 └── implementation-strategy.md # Implementation plan
 ```
@@ -116,7 +140,10 @@ CrateDigger/
 
 ### Firestore Security Rules
 
-The default rules in `firestore.rules` allow authenticated users to read and write all documents. **Important**: Review and customize these rules to ensure users can only access their own tracks and playlists before deploying to production.
+The security rules in `firestore.rules` enforce user-specific access control:
+- Users can only read/write their own `User`, `Track`, `Playlist`, and `ProcessedTrack` documents
+- All write operations validate that `userId` matches the authenticated user
+- Rules are configured for the collections: `users`, `tracks`, `playlists`, `processedTracks`
 
 ### Firestore Indexes
 
