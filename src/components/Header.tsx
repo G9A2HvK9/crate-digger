@@ -5,9 +5,11 @@ import { useState, useEffect, useRef } from 'react';
 
 interface HeaderProps {
   onSettingsClick: () => void;
+  onAdminClick?: () => void;
+  isAdmin?: boolean;
 }
 
-export function Header({ onSettingsClick }: HeaderProps) {
+export function Header({ onSettingsClick, onAdminClick, isAdmin }: HeaderProps) {
   const [user] = useAuthState(auth);
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -53,6 +55,17 @@ export function Header({ onSettingsClick }: HeaderProps) {
           </button>
           {showMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-surface border border-surfaceLight rounded-lg shadow-lg z-50">
+              {isAdmin && onAdminClick && (
+                <button
+                  onClick={() => {
+                    onAdminClick();
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-text hover:bg-background transition-colors border-b border-surfaceLight"
+                >
+                  Admin Panel
+                </button>
+              )}
               <button
                 onClick={() => {
                   onSettingsClick();

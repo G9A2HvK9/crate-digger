@@ -40,13 +40,15 @@ export function Auth() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Create user document in Firestore
+      // Create user document in Firestore (pending approval)
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         email: user.email,
         firstName,
         lastName,
         handle: handle.toLowerCase(),
+        approved: false, // Requires admin approval
+        isAdmin: false,
         lastLibrarySync: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -59,6 +61,10 @@ export function Auth() {
       setLastName('');
       setHandle('');
       setMode('login');
+      setError(null);
+      
+      // Show success message
+      alert('Account created successfully! Your account is pending admin approval. You will be able to access the app once approved.');
     } catch (err: any) {
       console.error('Sign up error:', err);
       setError(err.message || 'Failed to create account');

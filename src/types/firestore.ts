@@ -10,6 +10,8 @@ export interface User {
   firstName: string;
   lastName: string;
   handle: string; // Unique username
+  approved: boolean; // Admin approval status
+  isAdmin: boolean; // Admin role
   lastLibrarySync: Timestamp | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;

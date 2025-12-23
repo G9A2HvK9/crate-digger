@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './firebase-config';
+import { isUserApproved, isAdmin } from './lib/admin';
 import { Layout } from './components/Layout'
 import { Auth } from './components/Auth'
 import { Header } from './components/Header'
@@ -10,22 +11,101 @@ import { LibraryView } from './components/LibraryView'
 import { PlaylistProcessor } from './components/PlaylistProcessor'
 import { TracksDashboard } from './components/TracksDashboard'
 import { Settings } from './components/Settings'
+import { AdminPanel } from './components/AdminPanel'
 
 function App() {
   const [user] = useAuthState(auth);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isApproved, setIsApproved] = useState<boolean | null>(null);
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Check approval status
+  useEffect(() => {
+    if (!user) {
+      setIsApproved(null);
+      setIsUserAdmin(false);
+      setLoading(false);
+      return;
+    }
+
+    const checkStatus = async () => {
+      setLoading(true);
+      const approved = await isUserApproved(user.uid);
+      const admin = await isAdmin(user.uid);
+      setIsApproved(approved);
+      setIsUserAdmin(admin);
+      setLoading(false);
+    };
+
+    checkStatus();
+  }, [user]);
 
   // Show auth screen if not logged in
   if (!user) {
     return <Auth />;
   }
 
+  // Show loading state
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="flex items-center gap-3 text-textMuted">
+            <div className="animate-spin">⚙️</div>
+            <span>Loading...</span>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show pending approval message
+  if (!isApproved) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-surface border border-surfaceLight rounded-lg p-8 text-center">
+            <h1 className="text-2xl font-bold text-text mb-4">Account Pending Approval</h1>
+            <p className="text-textMuted mb-4">
+              Your account has been created successfully, but it's pending admin approval.
+            </p>
+            <p className="text-textMuted text-sm">
+              You will be able to access CrateDigger once an administrator approves your account.
+            </p>
+            <button
+              onClick={() => auth.signOut()}
+              className="mt-6 px-4 py-2 bg-background border border-surfaceLight rounded text-text hover:border-accent transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <Header onSettingsClick={() => setShowSettings(true)} />
+      <Header 
+        onSettingsClick={() => setShowSettings(true)}
+        onAdminClick={isUserAdmin ? () => setShowAdmin(true) : undefined}
+        isAdmin={isUserAdmin}
+      />
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {showSettings ? (
+        {showAdmin ? (
+          <div>
+            <button
+              onClick={() => setShowAdmin(false)}
+              className="mb-4 text-accent hover:text-accentHover"
+            >
+              ← Back to Dashboard
+            </button>
+            <AdminPanel />
+          </div>
+        ) : showSettings ? (
           <div>
             <button
               onClick={() => setShowSettings(false)}
