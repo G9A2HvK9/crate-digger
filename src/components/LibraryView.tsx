@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { auth, db } from '../firebase-config';
 import type { Track } from '../types/firestore';
 
@@ -22,7 +22,8 @@ export function LibraryView() {
     const q = query(
       collection(db, 'tracks'),
       where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(500) // cost optimisation: limit to latest 500 tracks in real‑time view
     );
 
     const unsubscribe = onSnapshot(

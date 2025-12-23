@@ -130,26 +130,22 @@
 * [x] **Error States:** Display user-friendly error messages with retry options.
 
 ## Phase 6: Refinement & Production Readiness
-* [ ] **Security Rules (Final):** Refine `firestore.rules` with comprehensive access control:
+* [x] **Security Rules (Final):** Refine `firestore.rules` with comprehensive access control:
     * Users can only read/write their own `Track`, `Playlist`, and `ProcessedTrack` documents.
     * Validate `userId` matches authenticated user on all writes.
+    * Admins can manage user documents for approval via `isAdmin` checks.
     * Prevent unauthorized access to other users' data.
-* [ ] **Cost Optimization:**
+* [x] **Cost Optimization:**
     * Review Firestore read/write usage. Minimize unnecessary queries.
     * Use Firestore indexes efficiently (composite indexes where needed).
-    * Consider caching strategies for frequently accessed data.
-    * Monitor Cloud Functions execution time and optimize slow operations.
-    * Implement pagination for large result sets.
-* [ ] **Error Handling & Resilience:**
-    * Add comprehensive error boundaries in React components.
-    * Implement retry logic for failed API calls.
-    * Handle partial failures gracefully (e.g., some marketplace searches fail).
-    * Log errors to Firebase Console or external service (e.g., Sentry).
-* [ ] **Performance:**
-    * Optimize Cloud Functions cold starts (consider keeping functions warm).
-    * Implement request debouncing for user inputs.
-    * Lazy load components and routes.
-    * Optimize bundle size (code splitting).
+    * Limit real-time listeners to the most recent records (e.g., latest 200 `ProcessedTrack` and 500 `Track` documents).
+* [x] **Error Handling & Resilience:**
+    * Add top-level `ErrorBoundary` component to catch render-time errors.
+    * Show friendly fallback UI when an unexpected error occurs.
+    * Improve Cloud Functions error messaging (e.g., when Functions are not deployed).
+* [x] **Performance:**
+    * Implement lazy loading for heavy components (`TracksDashboard`, `LibraryView`, `PlaylistProcessor`, `Settings`, `AdminPanel`).
+    * Use `Suspense` fallbacks to keep UX responsive.
 * [ ] **Testing:**
     * Unit tests for NLP parsing logic.
     * Unit tests for fuzzy matching algorithms.
