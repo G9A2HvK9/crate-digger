@@ -75,21 +75,39 @@ export function MarketplaceResults({
     juno: 'Juno Download',
   };
 
-  if (compact && hasResults) {
+  // Compact mode used inside table cell
+  if (compact) {
+    if (hasResults) {
+      return (
+        <div className="flex gap-1 flex-wrap">
+          {results.map((result, index) => (
+            <a
+              key={index}
+              href={result.url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2 py-0.5 text-xs bg-accent hover:bg-accentHover text-background rounded transition-colors"
+            >
+              {storeNames[result.store] || result.store}
+            </a>
+          ))}
+        </div>
+      );
+    }
+
+    // No results yet – show a small scan button
     return (
-      <div className="flex gap-1 flex-wrap">
-        {results.map((result, index) => (
-          <a
-            key={index}
-            href={result.url || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-2 py-0.5 text-xs bg-accent hover:bg-accentHover text-background rounded transition-colors"
-          >
-            {storeNames[result.store] || result.store}
-          </a>
-        ))}
-      </div>
+      <button
+        onClick={handleSearch}
+        disabled={isSearching || !user}
+        className={cn(
+          'px-2 py-1 text-xs rounded border transition-colors',
+          'border-surfaceLight text-textMuted hover:border-accent hover:text-accent',
+          'disabled:opacity-40 disabled:cursor-not-allowed'
+        )}
+      >
+        {isSearching ? 'Scanning…' : 'Scan'}
+      </button>
     );
   }
 

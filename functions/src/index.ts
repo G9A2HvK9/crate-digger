@@ -117,7 +117,7 @@ function fuzzyMatchTrack(
 
   const fuse = new Fuse(userTracks, {
     keys: ['searchableString'],
-    threshold: 0.3, // Lower = more strict matching
+    threshold: 0.55, // Lower = more strict matching
     includeScore: true,
   });
 

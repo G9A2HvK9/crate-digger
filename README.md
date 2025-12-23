@@ -30,7 +30,7 @@ CrateDigger solves a common problem for DJs: you find great tracks on YouTube pl
   - Colors: Background `#000000`, Surface `#1e1e1e`, Accent `#00AABB`
 - **Backend**: Firebase Cloud Functions (Node.js) for serverless processing
 - **Database**: Cloud Firestore (NoSQL)
-- **Authentication**: Firebase Authentication (Email/Password) with handle-based login
+- **Authentication**: Firebase Authentication (Email/Password) with handle-based login and admin approval
 - **Hosting**: Firebase Hosting
 
 ## 🚧 Development Status
@@ -45,6 +45,8 @@ CrateDigger solves a common problem for DJs: you find great tracks on YouTube pl
 - [x] Complete authentication system (sign up, login, password reset/change)
 - [x] User profiles with first name, last name, and unique handle
 - [x] API key management (YouTube, Discogs) stored per-user in Firestore
+- [x] Admin approval system for new accounts (pending until approved)
+- [x] Admin Panel for managing user approvals
 
 ### ✅ Phase 2: Rekordbox Ingest (Complete)
 - [x] XML parser for Rekordbox library files (fast-xml-parser)
