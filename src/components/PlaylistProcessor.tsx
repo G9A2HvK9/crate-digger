@@ -96,23 +96,31 @@ export function PlaylistProcessor() {
       // Check for common error cases
       let errorMessage = 'An error occurred while processing the playlist';
       
+      // Get error code and message
+      const errorCode = error.code || error?.details?.code || '';
+      const errorMsg = error.message || error?.details?.message || '';
+      
       // Check for 404 or function not found (Cloud Functions not deployed)
+      // Firebase returns 'internal' when functions aren't deployed or return 404
       if (
-        error.code === 'functions/not-found' || 
-        error.code === 'functions/unavailable' ||
-        error.code === 'internal' ||
-        (error.message && error.message.includes('404')) ||
-        (error.message && error.message.includes('not found'))
+        errorCode === 'functions/not-found' || 
+        errorCode === 'functions/unavailable' ||
+        errorCode === 'internal' ||
+        errorCode === 'functions/internal' ||
+        errorMsg.includes('404') ||
+        errorMsg.includes('not found') ||
+        errorMsg.includes('UNAVAILABLE') ||
+        errorMsg.includes('Function not found')
       ) {
-        errorMessage = 'Cloud Functions are not deployed. Please upgrade to Firebase Blaze plan and deploy Cloud Functions using: firebase deploy --only functions';
-      } else if (error.code === 'functions/failed-precondition') {
-        errorMessage = error.message || 'YouTube API key not configured. Please add your API key in Settings.';
-      } else if (error.code === 'functions/unauthenticated') {
+        errorMessage = 'Cloud Functions are not deployed. This feature requires:\n\n1. Upgrade to Firebase Blaze plan: https://console.firebase.google.com/project/crate-digger-app/usage/details\n2. Deploy Cloud Functions: firebase deploy --only functions\n\nOnce deployed, playlist processing will work.';
+      } else if (errorCode === 'functions/failed-precondition') {
+        errorMessage = errorMsg || 'YouTube API key not configured. Please add your API key in Settings.';
+      } else if (errorCode === 'functions/unauthenticated') {
         errorMessage = 'You must be logged in to process playlists.';
-      } else if (error.code === 'functions/permission-denied') {
+      } else if (errorCode === 'functions/permission-denied') {
         errorMessage = 'You do not have permission to perform this action.';
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (errorMsg) {
+        errorMessage = errorMsg;
       }
       
       setProcessingState({
@@ -205,9 +213,11 @@ export function PlaylistProcessor() {
 
         {processingState.status === 'error' && (
           <div className="p-4 bg-background border border-red-500/50 rounded">
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-start gap-3 mb-2">
               <div className="text-red-400">❌</div>
-              <p className="text-text text-red-400">{processingState.message}</p>
+              <div className="flex-1">
+                <p className="text-text text-red-400 whitespace-pre-line">{processingState.message}</p>
+              </div>
             </div>
             <button
               onClick={() => {
