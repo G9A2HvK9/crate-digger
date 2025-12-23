@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase-config';
 import { cn } from '../lib/utils';
+import { deleteUserLibrary } from '../lib/firestoreUpload';
 import type { UserApiKeys } from '../types/firestore';
 
 export function Settings() {
@@ -30,6 +31,33 @@ export function Settings() {
   const [apiKeysLoading, setApiKeysLoading] = useState(false);
   const [apiKeysError, setApiKeysError] = useState<string | null>(null);
   const [apiKeysSuccess, setApiKeysSuccess] = useState(false);
+
+  // Library management
+  const [libraryTrackCount, setLibraryTrackCount] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+
+  // Load library track count
+  useEffect(() => {
+    if (!user) return;
+
+    const loadTrackCount = async () => {
+      try {
+        const tracksQuery = query(
+          collection(db, 'tracks'),
+          where('userId', '==', user.uid)
+        );
+        const snapshot = await getDocs(tracksQuery);
+        setLibraryTrackCount(snapshot.size);
+      } catch (error) {
+        console.error('Error loading track count:', error);
+      }
+    };
+
+    loadTrackCount();
+  }, [user]);
 
   // Load API keys
   useEffect(() => {
@@ -129,6 +157,32 @@ export function Settings() {
       setApiKeysError(err.message || 'Failed to save API keys');
     } finally {
       setApiKeysLoading(false);
+    }
+  };
+
+  const handleDeleteLibrary = async () => {
+    if (!user || !deleteConfirm) return;
+
+    setDeleteError(null);
+    setDeleteSuccess(false);
+    setDeleteLoading(true);
+
+    try {
+      const result = await deleteUserLibrary(user.uid);
+      
+      if (result.errors.length > 0) {
+        setDeleteError(`Deleted ${result.deleted} tracks, but ${result.errors.length} errors occurred.`);
+      } else {
+        setDeleteSuccess(true);
+        setLibraryTrackCount(0);
+        setDeleteConfirm(false);
+        setTimeout(() => setDeleteSuccess(false), 5000);
+      }
+    } catch (err: any) {
+      console.error('Error deleting library:', err);
+      setDeleteError(err.message || 'Failed to delete library');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -361,6 +415,90 @@ export function Settings() {
               {apiKeysLoading ? 'Saving...' : 'Save API Keys'}
             </button>
           </form>
+        </div>
+
+        {/* Library Management Section */}
+        <div className="mt-8 pt-8 border-t border-surfaceLight">
+          <h3 className="text-xl font-semibold text-text mb-4">Library Management</h3>
+          <div className="space-y-4 max-w-2xl">
+            <div>
+              <p className="text-textMuted text-sm mb-2">
+                {libraryTrackCount !== null 
+                  ? `You have ${libraryTrackCount} tracks in your library.`
+                  : 'Loading track count...'}
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-medium text-text mb-2">Delete Library</h4>
+              <p className="text-textMuted text-sm mb-4">
+                Permanently delete all tracks from your library. This action cannot be undone.
+              </p>
+              
+              {!deleteConfirm ? (
+                <button
+                  onClick={() => setDeleteConfirm(true)}
+                  className={cn(
+                    'px-6 py-2 rounded transition-colors',
+                    'bg-red-600 hover:bg-red-700 text-white font-semibold',
+                    'disabled:opacity-50 disabled:cursor-not-allowed'
+                  )}
+                >
+                  Delete All Library Tracks
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="p-3 bg-red-500/10 border border-red-500/50 rounded">
+                    <p className="text-red-400 text-sm font-semibold mb-2">
+                      Are you sure you want to delete all {libraryTrackCount} tracks?
+                    </p>
+                    <p className="text-textMuted text-xs">
+                      This action cannot be undone. All your library tracks will be permanently deleted.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleDeleteLibrary}
+                      disabled={deleteLoading}
+                      className={cn(
+                        'px-6 py-2 rounded transition-colors',
+                        'bg-red-600 hover:bg-red-700 text-white font-semibold',
+                        'disabled:opacity-50 disabled:cursor-not-allowed'
+                      )}
+                    >
+                      {deleteLoading ? 'Deleting...' : 'Yes, Delete All'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDeleteConfirm(false);
+                        setDeleteError(null);
+                      }}
+                      disabled={deleteLoading}
+                      className={cn(
+                        'px-6 py-2 rounded transition-colors',
+                        'bg-background border border-surfaceLight text-text hover:border-accent',
+                        'disabled:opacity-50 disabled:cursor-not-allowed'
+                      )}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {deleteError && (
+                <div className="mt-3 p-3 bg-red-500/10 border border-red-500/50 rounded text-red-400 text-sm">
+                  {deleteError}
+                </div>
+              )}
+
+              {deleteSuccess && (
+                <div className="mt-3 p-3 bg-accent/10 border border-accent rounded text-accent text-sm">
+                  Library deleted successfully!
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

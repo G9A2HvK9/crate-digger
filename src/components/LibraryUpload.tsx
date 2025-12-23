@@ -66,10 +66,10 @@ export function LibraryUpload() {
         message: `Found ${tracks.length} tracks. Starting upload...`,
       }));
 
-      // Step 2: Upload to Firestore
-      setUploadState(prev => ({ ...prev, status: 'uploading' }));
+      // Step 2: Upload to Firestore (with deduplication)
+      setUploadState(prev => ({ ...prev, status: 'uploading', message: 'Checking for duplicates...' }));
       
-      const result = await uploadTracksToFirestore(tracks, (uploaded, total) => {
+      const result = await uploadTracksToFirestore(tracks, user.uid, (uploaded, total) => {
         const progress = Math.round((uploaded / total) * 100);
         setUploadState(prev => ({
           ...prev,
@@ -82,17 +82,24 @@ export function LibraryUpload() {
       // Step 3: Update sync timestamp
       await updateLibrarySyncTimestamp(user.uid);
 
+      let message = '';
+      if (result.duplicates > 0) {
+        message = `Uploaded ${result.success} new tracks. ${result.duplicates} duplicates skipped.`;
+      } else {
+        message = `Successfully uploaded ${result.success} tracks!`;
+      }
+
       if (result.failed > 0) {
         setUploadState(prev => ({
           ...prev,
           status: 'error',
-          message: `Upload completed with errors. ${result.success} uploaded, ${result.failed} failed.`,
+          message: `${message} ${result.failed} failed.`,
         }));
       } else {
         setUploadState(prev => ({
           ...prev,
           status: 'success',
-          message: `Successfully uploaded ${result.success} tracks!`,
+          message,
           progress: 100,
         }));
       }
